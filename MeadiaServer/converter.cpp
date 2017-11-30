@@ -60,20 +60,22 @@ namespace Cnvt
 
 	}
 
+	void CConverter::SetTimeStamp(unsigned int timeStamp)
+	{
+		_nTimeStamp = timeStamp;
+	}
+
 	int CConverter::Convert(char *pNalu, int nNaluSize)
 	{
 		if (pNalu == NULL || nNaluSize <= 4)
 			return 0;
 		char * p = pNalu;
 		int nNaluType = 0;
-		if (p[0] == 0 && p[1] == 0 && p[2] == 1)
-		{
-			nNaluType = pNalu[3] & 0x1f;
-		}
-		else
+		if (p[0] == 0 && p[1] == 0 && p[2] ==0 && p[3] == 1)
 		{
 			nNaluType = pNalu[4] & 0x1f;
 		}
+	
 
 		if (_pSPS == NULL && nNaluType == 0x07)
 		{
@@ -96,8 +98,6 @@ namespace Cnvt
 			return 1;
 
 		WriteFrame(pNalu, nNaluSize);
-
-
 
 		return 1;
 	}
@@ -198,8 +198,8 @@ namespace Cnvt
 
 		((std::ostream *)_streamOut)->write((char *)(pNalu + 4), nNaluSize - 4);
 
-		if (nNaluType == 1 || nNaluType == 5)
-			_nTimeStamp += 32;
+		//if (nNaluType == 1 || nNaluType == 5)
+		//	_nTimeStamp += 32;
 		_nPrevTagSize = 11 + nDataSize;
 
 	}

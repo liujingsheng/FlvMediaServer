@@ -9,7 +9,7 @@
 #include "splitter.h"
 using namespace Cnvt;
 
-UNVPlayer::UNVPlayer(): m_pBufferIn(nullptr), m_pBufferOut(nullptr), m_nFrameSize(0)
+UNVPlayer::UNVPlayer() : m_pBufferIn(nullptr), m_pBufferOut(nullptr), m_nFrameSize(0)
 {
 }
 
@@ -68,9 +68,9 @@ ULONG UNVPlayer::Startmonitor(CHAR* szCameraCode)
 	{
 	}
 #endif
-	UNVSDK* sdk =  UNVSDK::GetInstance();
+	UNVSDK* sdk = UNVSDK::GetInstance();
 
-	ulRet = IMOS_GetChannelCode(&sdk->mstLoginInfo.stUserLoginIDInfo, pcChannelCode);
+ 	ulRet = IMOS_GetChannelCode(&sdk->mstLoginInfo.stUserLoginIDInfo, pcChannelCode);
 	if (ERR_COMMON_SUCCEED != ulRet)
 	{
 		printf("IMOS_GetChannelCode failed!\n");
@@ -120,45 +120,86 @@ void  STDCALL UNVPlayer::ParseVideoOutputToFile(IN const USER_LOGIN_ID_INFO_S *p
 	IN LONG_REAL lReserved)
 {
 
-	//printf("ParseVideo callback, %s: size:%1u codeformat:%1u videoframetype:%1u %lu*%lu\n", pcChannelCode,
-	//	pstParseVideoData->ulDataLen,
-	//	pstParseVideoData->ulVideoCodeFormat,
-	//	pstParseVideoData->ulVideoFrameType,
-	//	pstParseVideoData->ulHeight,
-	//	pstParseVideoData->ulWidth);
+	printf("ParseVideo callback, %s: size:%1u codeformat:%1u videoframetype:%1u %lu*%lu time:%llu\n", pcChannelCode,
+		pstParseVideoData->ulDataLen,
+		pstParseVideoData->ulVideoCodeFormat,
+		pstParseVideoData->ulVideoFrameType,
+		pstParseVideoData->ulHeight,
+		pstParseVideoData->ulWidth,
+		pstParseVideoData->dlTimeStamp
+	);
+	printf("\n");
 	//for (int i = 0; i < 5; i++)
 	//{
-	//	printf("%x, ",pstParseVideoData->pucData[i]);
+	//	printf("%x, ", pstParseVideoData->pucData[i]);
 	//}
 	//printf("\n");
-	auto player= (UNVPlayer*)lUserParam;
-	player->m_pBufferIn = (UCHAR*)malloc(pstParseVideoData->ulDataLen*sizeof(UCHAR));
-	player->m_pBufferOut = (UCHAR*)malloc(pstParseVideoData->ulDataLen*sizeof(UCHAR));
+
+	auto player = (UNVPlayer*)lUserParam;
+	player->m_pBufferIn = (UCHAR*)malloc(pstParseVideoData->ulDataLen * sizeof(UCHAR));
+	//player->m_pBufferOut = (UCHAR*)malloc(pstParseVideoData->ulDataLen*sizeof(UCHAR));
 	memcpy(player->m_pBufferIn, pstParseVideoData->pucData, pstParseVideoData->ulDataLen);
 	player->m_nFrameSize = pstParseVideoData->ulDataLen;
+	player->m_cnvt.SetTimeStamp(pstParseVideoData->dlTimeStamp);
 	player->Convert();
+	//player->StreamOut();
 	free(player->m_pBufferIn);
-	free(player->m_pBufferOut);
+	//free(player->m_pBufferOut);
 
+}
+void UNVPlayer::StreamOut()
+{
+
+	int nOffset = 0;
+	int count = 0;
+
+	while (1)
+	{
+		int nNaluSize = 0;
+		int nNaluHeaderSize = 0;
+		unsigned char* oneNalu = 0;
+		oneNalu = Cnvt::GetOneNalu(m_pBufferIn + nOffset, m_nFrameSize - nOffset, nNaluSize, nNaluHeaderSize);
+		if (oneNalu == 0)
+			break;
+		u4 nNaluSize_u4(nNaluSize);
+		_streamOut->write((char *)nNaluSize_u4._u, 4);
+		_streamOut->write((char *)oneNalu, nNaluSize);
+
+		free(oneNalu);
+		nOffset += nNaluSize - 1;
+		if (nOffset >= m_nFrameSize - 4)
+			break;
+		count++;
+
+	}
 }
 
 int UNVPlayer::Convert()
 {
 	int nOffset = 0;
 	int count = 0;
-	int nNaluSize = 0;
+
 	while (1)
 	{
-
+		int nNaluSize = 0;
+		int nNaluHeaderSize = 0;
 		unsigned char* oneNalu = 0;
-		oneNalu = Cnvt::GetOneNalu(m_pBufferIn + nOffset, m_nFrameSize - nOffset, nNaluSize);
+		oneNalu = Cnvt::GetOneNalu(m_pBufferIn + nOffset, m_nFrameSize - nOffset, nNaluSize, nNaluHeaderSize);
 		if (oneNalu == 0)
 			break;
 
 		m_cnvt.Convert((char *)oneNalu, nNaluSize);
 		free(oneNalu);
-		nOffset += nNaluSize - 1;
-		if (nOffset >= m_nFrameSize - 4)
+		if (nNaluHeaderSize == 3)
+		{
+			nOffset += nNaluSize - 1;
+		}
+		else if (nNaluHeaderSize == 4)
+		{
+			nOffset += nNaluSize;
+		}
+	
+		if (nOffset >= m_nFrameSize - nNaluHeaderSize)
 			break;
 		count++;
 

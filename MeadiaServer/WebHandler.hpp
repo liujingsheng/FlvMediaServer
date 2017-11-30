@@ -94,7 +94,6 @@ public:
 	bool Stop()
 	{
 		m_player.Stopmonitor();
-
 		return true;
 	}
 
@@ -125,9 +124,21 @@ public:
 
 	bool handleData(CivetServer *server, struct mg_connection *conn, int bits, char *data, size_t data_len) override
 	{
+
 		printf("%s  %d\n", __FUNCTION__, data_len);
-		//mg_websocket_write(conn, WEBSOCKET_OPCODE_TEXT, "data1", 5);
-		return true;
+		int mop=bits & 0x0f;
+		switch (mop)
+		{
+		case WEBSOCKET_OPCODE_CONNECTION_CLOSE:
+			return false;
+			break;
+
+		default:
+			return true;
+			break;
+		}
+	
+		
 	}
 
 	void handleClose(CivetServer *server, const struct mg_connection *conn) override

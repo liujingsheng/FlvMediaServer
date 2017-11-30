@@ -39,6 +39,7 @@ namespace Cnvt
 		int Open();
 		int Close();
 		void SetStream(std::ostream* out);
+		void SetTimeStamp(unsigned int timeStamp);
 
 		int Convert(char *pNalu, int nNaluSize);
 

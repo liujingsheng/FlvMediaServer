@@ -1,0 +1,69 @@
+
+<!DOCTYPE html>  
+<html>  
+  
+<head>  
+    <meta content="text/html; charset=utf-8" http-equiv="Content-Type">  
+    <title>flv.js demo</title>  
+  
+    <style>  
+        .mainContainer {  
+            display: block;  
+            width: 1024px;  
+            margin-left: auto;  
+            margin-right: auto;  
+        }  
+  
+        .urlInput {  
+            display: block;  
+            width: 100%;  
+            margin-left: auto;  
+            margin-right: auto;  
+            margin-top: 8px;  
+            margin-bottom: 8px;  
+        }  
+  
+        .centeredVideo {  
+            display: block;  
+            width: 100%;  
+            height: 576px;  
+            margin-left: auto;  
+            margin-right: auto;  
+            margin-bottom: auto;  
+        }  
+  
+        .controls {  
+            display: block;  
+            width: 100%;  
+            text-align: left;  
+            margin-left: auto;  
+            margin-right: auto;  
+        }  
+    </style>  
+</head>  
+  
+<body>  
+      
+<script src="flv.min.js"></script>
+<video id="videoElement"></video>
+
+<script>
+    if (flvjs.isSupported()) {
+        var videoElement = document.getElementById('videoElement');
+        var flvPlayer = flvjs.createPlayer({
+            type: 'flv',
+			isLive: true,
+			hasVideo:true,
+			hasAudio:false,
+            url: 'ws://192.168.1.37:8801/h5sws/Tiandi'
+			});
+        flvPlayer.attachMediaElement(videoElement);
+        flvPlayer.load();
+        flvPlayer.play();
+    }
+   
+</script>
+      
+</body>  
+  
+</html> 

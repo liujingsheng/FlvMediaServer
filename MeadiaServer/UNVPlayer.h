@@ -11,8 +11,10 @@ public:
 	UNVPlayer();
 	ULONG Startmonitor( CHAR* szCameraCode);
 	ULONG Stopmonitor();
+	std::ostream* _streamOut;
 	void SetStream(std::ostream* ost);
 	int Convert();
+	void StreamOut();
 	void static STDCALL ParseVideoOutputToFile(IN const USER_LOGIN_ID_INFO_S *pstUserLoginIDInfo,
 		IN const CHAR *pcChannelCode,
 		IN const XP_PARSE_VIDEO_DATA_S *pstParseVideoData,
@@ -21,7 +23,7 @@ public:
 	~UNVPlayer();
 private:
     unsigned char *m_pBufferIn, *m_pBufferOut;
-    int m_nFrameSize;
+    ULONG_32 m_nFrameSize;
 	CHAR pcChannelCode[IMOS_CODE_LEN];
 	CConverter m_cnvt;
 
@@ -29,6 +31,8 @@ private:
 
 inline void UNVPlayer::SetStream(std::ostream* ost)
 {
+
+	_streamOut = ost;
 	m_cnvt.SetStream(ost);
 }
 
